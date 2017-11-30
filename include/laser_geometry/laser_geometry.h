@@ -37,15 +37,40 @@
 #include "boost/numeric/ublas/matrix.hpp"
 #include "boost/thread/mutex.hpp"
 
+#ifndef ROS2
+
 #include <tf/tf.h>
 #include <tf2/buffer_core.h>
 
 #include "sensor_msgs/LaserScan.h"
 #include "sensor_msgs/PointCloud.h"
 #include "sensor_msgs/PointCloud.h"
+#include <sensor_msgs/PointCloud2.h>
+
+
+typedef sensor_msgs::LaserScan LaserScan;
+typedef sensor_msgs::PointCloud PointCloud;
+typedef geometry_msgs::TransformStamped TransformStamped;
+typedef sensor_msgs::PointCloud2 PointCloud2;
+
+#else
+
+#include <tf2/buffer_core.h>
+#include "sensor_msgs/msg/Laser_Scan.hpp"
+#include "sensor_msgs/msg/Point_Cloud.hpp"
+#include <sensor_msgs/msg/Point_Cloud2.hpp>
+
+typedef sensor_msgs::msg::LaserScan LaserScan;
+typedef sensor_msgs::msg::PointCloud PointCloud;
+typedef geometry_msgs::msg::TransformStamped TransformStamped;
+typedef sensor_msgs::msg::PointCloud2 PointCloud2;
+
+#define ROS_DEBUG(...)
+#define ROS_ASSERT(...)
+
+#endif // !ROS2
 
 #include <Eigen/Core>
-#include <sensor_msgs/PointCloud2.h>
 
 namespace laser_geometry
 {
@@ -122,8 +147,8 @@ namespace laser_geometry
        *   channel_option::Intensity, channel_option::Index,
        *   channel_option::Distance, channel_option::Timestamp.
        */
-      void projectLaser (const sensor_msgs::LaserScan& scan_in,
-                         sensor_msgs::PointCloud& cloud_out,
+      void projectLaser (const LaserScan& scan_in,
+                         PointCloud& cloud_out,
                          double range_cutoff = -1.0,
                          int channel_options = channel_option::Default)
       {
@@ -146,14 +171,13 @@ namespace laser_geometry
        *   channel_option::Intensity, channel_option::Index,
        *   channel_option::Distance, channel_option::Timestamp.
        */
-      void projectLaser (const sensor_msgs::LaserScan& scan_in,
-                         sensor_msgs::PointCloud2 &cloud_out,
+      void projectLaser (const LaserScan& scan_in,
+                         PointCloud2 &cloud_out,
                          double range_cutoff = -1.0,
                          int channel_options = channel_option::Default)
       {
         projectLaser_(scan_in, cloud_out, range_cutoff, channel_options);
       }
-
 
       //! Transform a sensor_msgs::LaserScan into a sensor_msgs::PointCloud in target frame
       /*!
@@ -177,9 +201,9 @@ namespace laser_geometry
        *   channel_option::Distance, channel_option::Timestamp.
        */
       void transformLaserScanToPointCloud (const std::string& target_frame,
-                                           const sensor_msgs::LaserScan& scan_in,
-                                           sensor_msgs::PointCloud& cloud_out,
-                                           tf::Transformer& tf,
+                                           const LaserScan& scan_in,
+                                           PointCloud& cloud_out,
+                                           tf2::BufferCore &tf,
                                            double range_cutoff,
                                            int channel_options = channel_option::Default)
       {
@@ -206,14 +230,15 @@ namespace laser_geometry
        *   channel_option::Distance, channel_option::Timestamp.
        */
       void transformLaserScanToPointCloud (const std::string& target_frame,
-                                           const sensor_msgs::LaserScan& scan_in,
-                                           sensor_msgs::PointCloud& cloud_out,
-                                           tf::Transformer& tf,
+                                           const LaserScan& scan_in,
+                                           PointCloud& cloud_out,
+                                           tf2::BufferCore &tf,
                                            int channel_options = channel_option::Default)
       {
         return transformLaserScanToPointCloud_ (target_frame, cloud_out, scan_in, tf, -1.0, channel_options);
       }
 
+#ifndef ROS2
       //! Transform a sensor_msgs::LaserScan into a sensor_msgs::PointCloud2 in target frame
       /*!
        * Transform a single laser scan from a linear array into a 3D
@@ -237,14 +262,15 @@ namespace laser_geometry
        *   channel_option::Distance, channel_option::Timestamp.
        */
       void transformLaserScanToPointCloud(const std::string &target_frame,
-                                           const sensor_msgs::LaserScan &scan_in,
-                                           sensor_msgs::PointCloud2 &cloud_out,
-                                           tf::Transformer &tf,
+                                           const LaserScan &scan_in,
+                                           PointCloud2 &cloud_out,
+                                           tf2::BufferCore &tf,
                                            double range_cutoff = -1.0,
                                            int channel_options = channel_option::Default)
       {
         transformLaserScanToPointCloud_(target_frame, scan_in, cloud_out, tf, range_cutoff, channel_options);
       }
+#endif // !ROS2
 
       //! Transform a sensor_msgs::LaserScan into a sensor_msgs::PointCloud2 in target frame
       /*!
@@ -269,8 +295,8 @@ namespace laser_geometry
        *   channel_option::Distance, channel_option::Timestamp.
        */
       void transformLaserScanToPointCloud(const std::string &target_frame,
-                                          const sensor_msgs::LaserScan &scan_in,
-                                          sensor_msgs::PointCloud2 &cloud_out,
+                                          const LaserScan &scan_in,
+                                          PointCloud2 &cloud_out,
                                           tf2::BufferCore &tf,
                                           double range_cutoff = -1.0,
                                           int channel_options = channel_option::Default)
@@ -294,46 +320,48 @@ namespace laser_geometry
     private:
 
       //! Internal hidden representation of projectLaser
-      void projectLaser_ (const sensor_msgs::LaserScan& scan_in,
-                          sensor_msgs::PointCloud& cloud_out,
+      void projectLaser_ (const LaserScan& scan_in,
+                          PointCloud& cloud_out,
                           double range_cutoff,
                           bool preservative,
                           int channel_options);
 
       //! Internal hidden representation of projectLaser
-      void projectLaser_ (const sensor_msgs::LaserScan& scan_in,
-                          sensor_msgs::PointCloud2 &cloud_out,
+      void projectLaser_ (const LaserScan& scan_in,
+                          PointCloud2 &cloud_out,
                           double range_cutoff,
                           int channel_options);
 
       //! Internal hidden representation of transformLaserScanToPointCloud
       void transformLaserScanToPointCloud_ (const std::string& target_frame,
-                                            sensor_msgs::PointCloud& cloud_out,
-                                            const sensor_msgs::LaserScan& scan_in,
-                                            tf::Transformer & tf,
+                                            PointCloud& cloud_out,
+                                            const LaserScan& scan_in,
+                                            tf2::BufferCore &tf,
                                             double range_cutoff,
                                             int channel_options);
 
+#ifndef ROS2
       //! Internal hidden representation of transformLaserScanToPointCloud2
       void transformLaserScanToPointCloud_ (const std::string &target_frame,
-                                            const sensor_msgs::LaserScan &scan_in,
-                                            sensor_msgs::PointCloud2 &cloud_out,
-                                            tf::Transformer &tf,
+                                            const LaserScan &scan_in,
+                                            PointCloud2 &cloud_out,
+                                            tf2::BufferCore &tf,
                                             double range_cutoff,
                                             int channel_options);
+#endif // !ROS2
 
       //! Internal hidden representation of transformLaserScanToPointCloud2
       void transformLaserScanToPointCloud_ (const std::string &target_frame,
-                                            const sensor_msgs::LaserScan &scan_in,
-                                            sensor_msgs::PointCloud2 &cloud_out,
+                                            const LaserScan &scan_in,
+                                            PointCloud2 &cloud_out,
                                             tf2::BufferCore &tf,
                                             double range_cutoff,
                                             int channel_options);
 
       //! Function used by the several forms of transformLaserScanToPointCloud_
       void transformLaserScanToPointCloud_ (const std::string &target_frame,
-                                            const sensor_msgs::LaserScan &scan_in,
-                                            sensor_msgs::PointCloud2 &cloud_out,
+                                            const LaserScan &scan_in,
+                                            PointCloud2 &cloud_out,
                                             tf2::Quaternion quat_start,
                                             tf2::Vector3 origin_start,
                                             tf2::Quaternion quat_end,

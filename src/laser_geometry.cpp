@@ -29,14 +29,28 @@
 
 #include "laser_geometry/laser_geometry.h"
 #include <algorithm>
+#ifndef ROS2
 #include <ros/assert.h>
+#define POINT_FIELD sensor_msgs::PointField
+#define TIME ros::Time
+#else
+
+#include "rclcpp/time.hpp"
+#define TIME rclcpp::Time
+
+#define POINT_FIELD sensor_msgs::msg::PointField
+
+// TODO: fix definitions
+typedef double tfScalar;
+
+#endif // !ROS2
 #include <tf2/LinearMath/Transform.h>
 
 namespace laser_geometry
 {
 
   void
-    LaserProjection::projectLaser_ (const sensor_msgs::LaserScan& scan_in, sensor_msgs::PointCloud & cloud_out, double range_cutoff,
+    LaserProjection::projectLaser_ (const LaserScan& scan_in, PointCloud & cloud_out, double range_cutoff,
                                    bool preservative, int mask)
   {
     boost::numeric::ublas::matrix<double> ranges(2, scan_in.ranges.size());
@@ -185,8 +199,9 @@ const boost::numeric::ublas::matrix<double>& LaserProjection::getUnitVectors_(do
       }
   };
 
+#ifndef ROS2
   void
-    LaserProjection::transformLaserScanToPointCloud_ (const std::string &target_frame, sensor_msgs::PointCloud &cloud_out, const sensor_msgs::LaserScan &scan_in,
+    LaserProjection::transformLaserScanToPointCloud_ (const std::string &target_frame, PointCloud &cloud_out, const LaserScan &scan_in,
                                                      tf::Transformer& tf, double range_cutoff, int mask)
   {
     cloud_out.header = scan_in.header;
@@ -272,9 +287,10 @@ const boost::numeric::ublas::matrix<double>& LaserProjection::getUnitVectors_(do
     if(!requested_index)
       cloud_out.channels.erase(cloud_out.channels.begin() + index_channel_idx);
   }
+#endif // !ROS2
 
-  void LaserProjection::projectLaser_ (const sensor_msgs::LaserScan& scan_in,
-                                      sensor_msgs::PointCloud2 &cloud_out,
+  void LaserProjection::projectLaser_ (const LaserScan& scan_in,
+                                      PointCloud2 &cloud_out,
                                       double range_cutoff,
                                       int channel_options)
   {
@@ -313,15 +329,15 @@ const boost::numeric::ublas::matrix<double>& LaserProjection::getUnitVectors_(do
     cloud_out.fields.resize (3);
     cloud_out.fields[0].name = "x";
     cloud_out.fields[0].offset = 0;
-    cloud_out.fields[0].datatype = sensor_msgs::PointField::FLOAT32;
+    cloud_out.fields[0].datatype = POINT_FIELD::FLOAT32;
     cloud_out.fields[0].count = 1;
     cloud_out.fields[1].name = "y";
     cloud_out.fields[1].offset = 4;
-    cloud_out.fields[1].datatype = sensor_msgs::PointField::FLOAT32;
+    cloud_out.fields[1].datatype = POINT_FIELD::FLOAT32;
     cloud_out.fields[1].count = 1;
     cloud_out.fields[2].name = "z";
     cloud_out.fields[2].offset = 8;
-    cloud_out.fields[2].datatype = sensor_msgs::PointField::FLOAT32;
+    cloud_out.fields[2].datatype = POINT_FIELD::FLOAT32;
     cloud_out.fields[2].count = 1;
 
     // Define 4 indices in the channel array for each possible value type
@@ -334,7 +350,7 @@ const boost::numeric::ublas::matrix<double>& LaserProjection::getUnitVectors_(do
       int field_size = cloud_out.fields.size();
       cloud_out.fields.resize(field_size + 1);
       cloud_out.fields[field_size].name = "intensity";
-      cloud_out.fields[field_size].datatype = sensor_msgs::PointField::FLOAT32;
+      cloud_out.fields[field_size].datatype = POINT_FIELD::FLOAT32;
       cloud_out.fields[field_size].offset = offset;
       cloud_out.fields[field_size].count = 1;
       offset += 4;
@@ -346,7 +362,7 @@ const boost::numeric::ublas::matrix<double>& LaserProjection::getUnitVectors_(do
       int field_size = cloud_out.fields.size();
       cloud_out.fields.resize(field_size + 1);
       cloud_out.fields[field_size].name = "index";
-      cloud_out.fields[field_size].datatype = sensor_msgs::PointField::INT32;
+      cloud_out.fields[field_size].datatype = POINT_FIELD::INT32;
       cloud_out.fields[field_size].offset = offset;
       cloud_out.fields[field_size].count = 1;
       offset += 4;
@@ -358,7 +374,7 @@ const boost::numeric::ublas::matrix<double>& LaserProjection::getUnitVectors_(do
       int field_size = cloud_out.fields.size();
       cloud_out.fields.resize(field_size + 1);
       cloud_out.fields[field_size].name = "distances";
-      cloud_out.fields[field_size].datatype = sensor_msgs::PointField::FLOAT32;
+      cloud_out.fields[field_size].datatype = POINT_FIELD::FLOAT32;
       cloud_out.fields[field_size].offset = offset;
       cloud_out.fields[field_size].count = 1;
       offset += 4;
@@ -370,7 +386,7 @@ const boost::numeric::ublas::matrix<double>& LaserProjection::getUnitVectors_(do
       int field_size = cloud_out.fields.size();
       cloud_out.fields.resize(field_size + 1);
       cloud_out.fields[field_size].name = "stamps";
-      cloud_out.fields[field_size].datatype = sensor_msgs::PointField::FLOAT32;
+      cloud_out.fields[field_size].datatype = POINT_FIELD::FLOAT32;
       cloud_out.fields[field_size].offset = offset;
       cloud_out.fields[field_size].count = 1;
       offset += 4;
@@ -383,19 +399,19 @@ const boost::numeric::ublas::matrix<double>& LaserProjection::getUnitVectors_(do
       cloud_out.fields.resize(field_size + 3);
 
       cloud_out.fields[field_size].name = "vp_x";
-      cloud_out.fields[field_size].datatype = sensor_msgs::PointField::FLOAT32;
+      cloud_out.fields[field_size].datatype = POINT_FIELD::FLOAT32;
       cloud_out.fields[field_size].offset = offset;
       cloud_out.fields[field_size].count = 1;
       offset += 4;
 
       cloud_out.fields[field_size + 1].name = "vp_y";
-      cloud_out.fields[field_size + 1].datatype = sensor_msgs::PointField::FLOAT32;
+      cloud_out.fields[field_size + 1].datatype = POINT_FIELD::FLOAT32;
       cloud_out.fields[field_size + 1].offset = offset;
       cloud_out.fields[field_size + 1].count = 1;
       offset += 4;
 
       cloud_out.fields[field_size + 2].name = "vp_z";
-      cloud_out.fields[field_size + 2].datatype = sensor_msgs::PointField::FLOAT32;
+      cloud_out.fields[field_size + 2].datatype = POINT_FIELD::FLOAT32;
       cloud_out.fields[field_size + 2].offset = offset;
       cloud_out.fields[field_size + 2].count = 1;
       offset += 4;
@@ -494,8 +510,8 @@ const boost::numeric::ublas::matrix<double>& LaserProjection::getUnitVectors_(do
   }
 
   void LaserProjection::transformLaserScanToPointCloud_(const std::string &target_frame,
-                                                        const sensor_msgs::LaserScan &scan_in,
-                                                        sensor_msgs::PointCloud2 &cloud_out,
+                                                        const LaserScan &scan_in,
+                                                        PointCloud2 &cloud_out,
                                                         tf2::Quaternion quat_start,
                                                         tf2::Vector3 origin_start,
                                                         tf2::Quaternion quat_end,
@@ -596,7 +612,7 @@ const boost::numeric::ublas::matrix<double>& LaserProjection::getUnitVectors_(do
     //if the user didn't request the index field, then we need to copy the PointCloud and drop it
     if(!requested_index)
     {
-      sensor_msgs::PointCloud2 cloud_without_index;
+      PointCloud2 cloud_without_index;
 
       //copy basic meta data
       cloud_without_index.header = cloud_out.header;
@@ -649,23 +665,43 @@ const boost::numeric::ublas::matrix<double>& LaserProjection::getUnitVectors_(do
     }
   }
 
+#ifndef ROS2
   void LaserProjection::transformLaserScanToPointCloud_ (const std::string &target_frame,
-                                                         const sensor_msgs::LaserScan &scan_in,
-                                                         sensor_msgs::PointCloud2 &cloud_out,
-                                                         tf::Transformer &tf,
+                                                         const LaserScan &scan_in,
+                                                         PointCloud2 &cloud_out,
+                                                         tf2::BufferCore &tf,
                                                          double range_cutoff,
                                                          int channel_options)
   {
-    ros::Time start_time = scan_in.header.stamp;
-    ros::Time end_time   = scan_in.header.stamp;
+    TIME start_time = scan_in.header.stamp;
+    TIME end_time   = scan_in.header.stamp;
+#ifndef ROS2
     if(!scan_in.ranges.empty()) end_time += ros::Duration ().fromSec ( (scan_in.ranges.size()-1) * scan_in.time_increment);
 
     tf::StampedTransform start_transform, end_transform ;
 
     tf.lookupTransform (target_frame, scan_in.header.frame_id, start_time, start_transform);
     tf.lookupTransform (target_frame, scan_in.header.frame_id, end_time, end_transform);
+#else
+    if (!scan_in.ranges.empty())
+    {
+      end_time = end_time + TIME((scan_in.ranges.size() - 1) * scan_in.time_increment, 0, RCL_SYSTEM_TIME);
+    }
 
-    tf::Quaternion q;
+    // TODO: reconcile all the different time constructs
+    std::chrono::milliseconds start(start_time.nanoseconds());
+    std::chrono::time_point<std::chrono::system_clock> st(start);
+    TransformStamped start_transform = tf.lookupTransform(target_frame, scan_in.header.frame_id, st);
+    std::chrono::milliseconds end(end_time.nanoseconds());
+    std::chrono::time_point<std::chrono::system_clock> e(end);
+    TransformStamped end_transform = tf.lookupTransform(target_frame, scan_in.header.frame_id, e);
+#endif //!ROS2
+
+#ifdef TRANSFORMS_ARE_DEFINED
+    
+    // TODO: add transforms...
+
+    tf2::Quaternion q;
     start_transform.getBasis().getRotation(q);
     tf2::Quaternion quat_start(q.getX(), q.getY(), q.getZ(), q.getW());
     end_transform.getBasis().getRotation(q);
@@ -682,21 +718,41 @@ const boost::numeric::ublas::matrix<double>& LaserProjection::getUnitVectors_(do
                                     quat_end, origin_end,
                                     range_cutoff,
                                     channel_options);
+#endif // TRANSFORMS_ARE_DEFINED
   }
+#endif // !ROS2
 
   void LaserProjection::transformLaserScanToPointCloud_ (const std::string &target_frame,
-                                                         const sensor_msgs::LaserScan &scan_in,
-                                                         sensor_msgs::PointCloud2 &cloud_out,
+                                                         const LaserScan &scan_in,
+                                                         PointCloud2 &cloud_out,
                                                          tf2::BufferCore &tf,
                                                          double range_cutoff,
                                                          int channel_options)
   {
-    ros::Time start_time = scan_in.header.stamp;
-    ros::Time end_time   = scan_in.header.stamp;
-    if(!scan_in.ranges.empty()) end_time += ros::Duration ().fromSec ( (scan_in.ranges.size()-1) * scan_in.time_increment);
+    TIME start_time = scan_in.header.stamp;
+    TIME end_time   = scan_in.header.stamp;
+#ifndef ROS2
+    if (!scan_in.ranges.empty())
+    {
+      end_time += ros::Duration().fromSec((scan_in.ranges.size() - 1) * scan_in.time_increment);
+    }
 
-    geometry_msgs::TransformStamped start_transform = tf.lookupTransform (target_frame, scan_in.header.frame_id, start_time);
-    geometry_msgs::TransformStamped end_transform = tf.lookupTransform (target_frame, scan_in.header.frame_id, end_time);
+    TransformStamped start_transform = tf.lookupTransform (target_frame, scan_in.header.frame_id, start_time);
+    TransformStamped end_transform = tf.lookupTransform (target_frame, scan_in.header.frame_id, end_time);
+#else
+    // TODO: reconcile all the different time constructs
+    if (!scan_in.ranges.empty())
+    {
+      end_time = end_time + TIME((scan_in.ranges.size() - 1) * scan_in.time_increment, 0, RCL_SYSTEM_TIME);
+    }
+
+    std::chrono::milliseconds start(start_time.nanoseconds());
+    std::chrono::time_point<std::chrono::system_clock> st(start);
+    TransformStamped start_transform = tf.lookupTransform(target_frame, scan_in.header.frame_id, st);
+    std::chrono::milliseconds end(end_time.nanoseconds());
+    std::chrono::time_point<std::chrono::system_clock> e(end);
+    TransformStamped end_transform = tf.lookupTransform(target_frame, scan_in.header.frame_id, e);
+#endif // !ROS2
 
     tf2::Quaternion quat_start(start_transform.transform.rotation.x,
                                start_transform.transform.rotation.y,
