@@ -743,7 +743,7 @@ const boost::numeric::ublas::matrix<double>& LaserProjection::getUnitVectors_(do
     // TODO: reconcile all the different time constructs
     if (!scan_in.ranges.empty())
     {
-      end_time = end_time + TIME((scan_in.ranges.size() - 1) * scan_in.time_increment, 0, RCL_SYSTEM_TIME);
+      end_time = end_time + rclcpp::Duration((scan_in.ranges.size() - 1) * scan_in.time_increment, 0);
     }
 
     std::chrono::milliseconds start(start_time.nanoseconds());
